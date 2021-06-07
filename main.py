@@ -1,6 +1,7 @@
 """
 Platformer Game
 """
+from typing import Optional
 import arcade
 import time
 import numpy as np
@@ -19,8 +20,19 @@ COIN_SCALING = 0.5
 PLAYER_MOVEMENT_SPEED = 3
 PLAYER_AIR_SPEED = 9
 
-GRAVITY = 1
-MAX_JUMP_SPEED = 25
+# --- Physics forces
+GRAVITY = 1500
+MAX_JUMP_IMPULSE = 2000
+DEFAULT_DAMPING = 1.0
+PLAYER_DAMPING = 0.4
+PLAYER_FRICTION = 1.0
+WALL_FRICTION = 0.7
+PLAYER_MASS = 2.0
+PLAYER_MAX_HORIZONTAL_SPEED = 450
+PLAYER_MAX_HORIZONTAL_SPEED_ON_GROUND = 250
+PLAYER_MAX_VERTICAL_SPEED = 1600
+PLAYER_MOVE_FORCE_ON_GROUND = 5000
+PLAYER_MOVE_FORCE_IN_AIR = 90000
 
 # How many pixels to keep as a minimum margin between the character
 # and the edge of the screen.
@@ -29,6 +41,95 @@ RIGHT_VIEWPORT_MARGIN = 250
 BOTTOM_VIEWPORT_MARGIN = 50
 TOP_VIEWPORT_MARGIN = 100
 
+# Close enough to not-moving to have animation go to idle.
+DEAD_ZONE = 0.1
+
+# Constans used to track if the player is facing left or right
+RIGHT_FACING = 0
+LEFT_FACING = 1
+
+# How many pixels to move before we change the texture in the walking animation
+DISTANCE_TO_CHANGE_TEXTURE = 50
+
+class PlayerSprite(arcade.Sprite):
+    """Player Sprite """
+
+    def __init__(self):
+        # Let parent initialize
+        super().__init__()
+
+        # Set our scale
+        self.scale = CHARACTER_SCALING
+
+        # Images from Kenney.nl's Character pack
+        main_path = "images/Knight"
+
+        # Load textures for idle standing
+        self.idle_texture_pair = arcade.load_texture_pair(f"{main_path}_idle.png")
+        self.jump_texture_pair = arcade.load_texture_pair(f"{main_path}_jump.png")
+        self.fall_texture_pair = arcade.load_texture_pair(f"{main_path}_fall.png")
+        self.pre_jump_texture_pair = arcade.load_texture_pair(f"{main_path}_fall.png")
+
+        # Load textures for walking
+        self.walk_textures = []
+        for i in range(2):
+            texture = arcade.load_texture_pair(f"{main_path}_walk{i}.png")
+            self.walk_textures.append(texture)
+
+        # Set the initial texture
+        self.texture = self.idle_texture_pair[0]
+
+        # Hit box will be set based on the first image used.
+        self.hit_box = self.texture.hit_box_points
+
+        # Default to face-right
+        self.character_face_direction = RIGHT_FACING
+
+        # Index of our current texture
+        self.cur_texture = 0
+
+        #How far have we traveled horizontally since changing the texture
+        self.x_odemeter = 0
+
+    def pymunk_moved(self, physics_engine, dx, dy, d_angle):
+        """Handle being moved by the ?pymunk? engine """
+        # Figure out if we need to face left or right
+        if dx < -DEAD_ZONE and self.character_face_direction == RIGHT_FACING:
+            self.character_face_direction = LEFT_FACING
+        elif dx > DEAD_ZONE and self.character_face_direction == LEFT_FACING:
+            self.character_face_direction = RIGHT_FACING
+
+        # Are we on the ground?
+        is_on_ground = physics_engine.is_on_ground(self)
+
+        # Add to the odometer gow far we've moved
+        self.x_odemeter += dx
+
+        # Jumping animation
+        if not is_on_ground:
+            if dy > DEAD_ZONE:
+                self.texture = self.jump_texture_pair[self.character_face_direction]
+                return
+            elif dy < -DEAD_ZONE:
+                self.texture = self.fall_texture_pair[self.character_face_direction]
+                return
+
+        # Idle animation
+        if abs(dx) <= DEAD_ZONE:
+            self.texture = self.idle_texture_pair[self.character_face_direction]
+            return
+
+        # Have we moved far enough to change the texture?
+        if abs(self.x_odemeter) > DISTANCE_TO_CHANGE_TEXTURE:
+
+            # Reset the odometer
+            self.x_odemeter = 0
+
+            # Advance the walking animation
+            self.cur_texture += 1
+            if self.cur_texture > 1:
+                self.cur_texture = 0
+            self.texture = self.walk_textures[self.cur_texture][self.character_face_direction]
 
 class MyGame(arcade.Window):
     """
@@ -49,8 +150,11 @@ class MyGame(arcade.Window):
         # Separate variable that holds the player sprite
         self.player_list = None
 
+        # Player sprite
+        self.player_sprite: Optional[PlayerSprite] = None
+
         # Our physics engine
-        self.physics_engine = None
+        self.physics_engine: Optional[arcade.PymunkPhysicsEngine]
 
         # Used to keep track of our scrolling
         self.view_bottom = 0
@@ -63,14 +167,14 @@ class MyGame(arcade.Window):
         self.left_pressed: bool = False
         self.right_pressed: bool = False
         self.space_pressed: bool = False
-        self.jump_speed = 0
+        self.player_jump_impulse = 0
         self.jump_timer = 0
         self.left_jump: bool = False
         self.right_jump: bool = False
 
         # Load sounds
         self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
-        self.jump_sound = arcade.load_sound(":resources:sounds/jump1.wav")
+        self.jump_sound = arcade.load_sound(":resources:sounds/jump5.wav")
 
         arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
 
@@ -86,16 +190,15 @@ class MyGame(arcade.Window):
         self.coin_list = arcade.SpriteList(use_spatial_hash=True)
 
         # Set up the player, specifically placing it at these coordinates.
-        image_source = ":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
-        self.player_sprite = arcade.Sprite(image_source, COIN_SCALING)
-        self.player_sprite.center_x = 64
-        self.player_sprite.center_y = 96
+        self.player_sprite = PlayerSprite()
+        self.player_sprite.center_x = 128
+        self.player_sprite.center_y = 128
         self.player_list.append(self.player_sprite)
 
         # --- Load in a map from the tiled editor ---
 
         # Name of file to load
-        map_name = ":resources:tmx_maps/map.tmx"
+        map_name = "jumping_road.tmx"
         # Name of the layer in the file that has our platforms/walls
         platforms_layer_name = 'Platforms'
         # Name of the layer that has items for pick-up
@@ -119,9 +222,21 @@ class MyGame(arcade.Window):
             arcade.set_background_color(my_map.background_color)
 
         # Create the 'physics engine'
-        self.physics_engine = arcade.PhysicsEnginePlatformer(self.player_sprite,
-                                                             self.wall_list,
-                                                             GRAVITY)
+        damping = DEFAULT_DAMPING
+        gravity = (0, -GRAVITY)
+        self.physics_engine = arcade.PymunkPhysicsEngine(damping=damping,
+                                                         gravity=gravity)
+        self.physics_engine.add_sprite(self.player_sprite,
+                                       friction=PLAYER_FRICTION,
+                                       mass=PLAYER_MASS,
+                                       moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
+                                       collision_type="player",
+                                       max_horizontal_velocity=PLAYER_MAX_HORIZONTAL_SPEED,
+                                       max_vertical_velocity=PLAYER_MAX_VERTICAL_SPEED)
+        self.physics_engine.add_sprite_list(self.wall_list,
+                                            friction=WALL_FRICTION,
+                                            collision_type="wall",
+                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
 
     def on_draw(self):
         """ Render the screen. """
@@ -148,7 +263,7 @@ class MyGame(arcade.Window):
             self.right_pressed = True
         elif key == arcade.key.SPACE:
             self.space_pressed = True
-            self.jump_speed = 0
+            self.player_jump_impulse = 0
         elif key == arcade.key.ESCAPE:
             self.setup()
 
@@ -170,36 +285,43 @@ class MyGame(arcade.Window):
         """Movement and game logic."""
 
         # Process left/right and jumping
-        if self.space_pressed and self.physics_engine.can_jump():
-            if self.jump_speed < MAX_JUMP_SPEED:
-                self.jump_speed += 1
+        if self.space_pressed and self.physics_engine.is_on_ground(self.player_sprite):
+            # Change texture when loading jump
+            self.player_sprite.texture = self.player_sprite.pre_jump_texture_pair[self.player_sprite.character_face_direction]
+            if self.player_jump_impulse < MAX_JUMP_IMPULSE:
+                self.player_jump_impulse += 80
             else:
                 self.space_pressed = False
             self.player_sprite.change_x = 0
-        elif self.jump_speed > 5 and self.physics_engine.can_jump():
-            self.player_sprite.change_y = self.jump_speed
-            if self.right_pressed:
-                self.player_sprite.change_x = PLAYER_AIR_SPEED
-            elif self.left_pressed:
-                self.player_sprite.change_x = -PLAYER_AIR_SPEED
+        elif self.player_jump_impulse > 320 and self.physics_engine.is_on_ground(self.player_sprite):
+            impulse = (0, self.player_jump_impulse)
+            self.physics_engine.apply_impulse(self.player_sprite, impulse)
             arcade.play_sound(self.jump_sound)
-        elif self.right_pressed and not self.left_pressed and self.physics_engine.can_jump():
+            if self.right_pressed and not self.left_pressed:
+                force = (PLAYER_MOVE_FORCE_IN_AIR, 0)
+                self.physics_engine.apply_force(self.player_sprite, force)
+            elif self.left_pressed and not self.right_pressed:
+                force = (-PLAYER_MOVE_FORCE_IN_AIR, 0)
+                self.physics_engine.apply_force(self.player_sprite, force)
+        elif self.right_pressed and not self.left_pressed and self.physics_engine.is_on_ground(self.player_sprite):
             if self.jump_timer == 0:
-                self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
-        elif self.left_pressed and not self.right_pressed and self.physics_engine.can_jump():
+                force = (PLAYER_MOVE_FORCE_ON_GROUND, 0)
+                self.physics_engine.apply_force(self.player_sprite, force)
+        elif self.left_pressed and not self.right_pressed and self.physics_engine.is_on_ground(self.player_sprite):
             if self.jump_timer == 0:
-                self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
-        elif self.physics_engine.can_jump():
+                force = (-PLAYER_MOVE_FORCE_ON_GROUND, 0)
+                self.physics_engine.apply_force(self.player_sprite, force)
+        elif self.physics_engine.is_on_ground(self.player_sprite):
             self.player_sprite.change_x = 0
 
-        if self.physics_engine.can_jump():
+        if self.physics_engine.is_on_ground(self.player_sprite):
             self.jump_timer = 0
         else:
-            self.jump_speed = 0
+            self.player_jump_impulse = 0
             self.jump_timer += 1
 
         # Move the player with the physics engine
-        self.physics_engine.update()
+        self.physics_engine.step()
 
         # See if we hit any coins
         coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite,
