@@ -1,8 +1,9 @@
-# Constants
+# Screen management
 SCREEN_WIDTH = 1120
 SCREEN_HEIGHT = 650
 SCREEN_TITLE = "Jump Knight"
 
+# Music management
 MUSIC_VOLUME = 0.3
 
 # Constants used to scale our sprites from their original size

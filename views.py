@@ -19,6 +19,7 @@ class MenuView(arcade.View):
         # Reset the viewport, necessary if we have a scrolling game and we need
         # to reset the viewport back to the start so we can see what we draw.
         arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+        self.play_song()
 
     def on_draw(self):
         """ Draw this view """
@@ -26,7 +27,7 @@ class MenuView(arcade.View):
         arcade.draw_lrwh_rectangle_textured(0,0,SCREEN_WIDTH, SCREEN_HEIGHT, background)
         arcade.draw_text("JUMP KNIGHT", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.2,
                          arcade.color.WHITE, font_size=70, anchor_x="center", font_name='GARA')
-        arcade.draw_text("PLAY [1]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.5,
+        arcade.draw_text("PLAY [1]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.6,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
         arcade.draw_text("RULES [2]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2.2,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
@@ -34,6 +35,8 @@ class MenuView(arcade.View):
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
         arcade.draw_text("EXIT [ESC]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 20,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
+        arcade.draw_text("To choose, press the key in square brackets.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.35,
+                         arcade.color.WHITE, font_size=20, anchor_x="center", font_name='GARA')
 
 
 
@@ -43,16 +46,17 @@ class MenuView(arcade.View):
             game_view = GameView()
             game_view.setup()
             self.window.show_view(game_view)
-            if not self.current_player == None:
-                self.music.stop(self.current_player)
+            self.music.stop(self.current_player)
             start_sound = arcade.load_sound("sounds/start game sound.wav")
             arcade.play_sound(start_sound, volume=0.5)
         elif _key == arcade.key.KEY_2 or _key == arcade.key.NUM_2:
             rules_view = RulesView()
             self.window.show_view(rules_view)
+            self.music.stop(self.current_player)
         elif _key == arcade.key.KEY_3 or _key == arcade.key.NUM_3:
             author_view = AuthorView()
             self.window.show_view(author_view)
+            self.music.stop(self.current_player)
         elif _key == arcade.key.ESCAPE:
             self.window.close()
 
