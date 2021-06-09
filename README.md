@@ -1,15 +1,23 @@
-# Game Title
-## Author: Anna Szymanek
+# Jump Knight
+## Author: Adrian Sobczak
 
 ### Short description
+Jump Knght is a game inspired on Jump King. My version features similar mechanics as the original. Most of the graphics and sound are made by me. Hope you enjoy!
 
 
 ### Technologies
-**name** - description
+**Python 3.9.5** - programming language used
+**Python arcade 2.5.7** - game developing library
 
 ### How to run this app?
-1. Clone the template project, replacing my-project with the name of the project you are creating: 
-`git clone  https://github.com/github-anki/Game-Template.git my-project`
-`cd my-project `
+1. Clone the game: 
+`git clone  https://github.com/Arcewirz/Jump-Knight.git Jump-Knight`
+`cd Jump-Knight `
 2. Install the project's development and runtime requirements:
 `pip install -r requirements.txt`
+3. Run the game by typing `python main.py`
+
+### Screenshots
+![Knight jumping in tutorial](screenshots/scr1.png)
+![Knight standing on the beggining of jumping road](screenshots/scr2.png)
+![Knight near the princess!](screenshots/scr3.png)
