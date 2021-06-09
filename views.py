@@ -44,27 +44,40 @@ class MenuView(arcade.View):
     def on_key_press(self, _key, _modifiers):
         """ If the user presses key, a given action will happen. """
         if _key == arcade.key.KEY_1 or _key == arcade.key.NUM_1:
+            self.music.stop(self.current_player)
             choose_view = GamemodeView()
             self.window.show_view(choose_view)
-            self.music.stop(self.current_player)
         elif _key == arcade.key.KEY_2 or _key == arcade.key.NUM_2:
+            self.music.stop(self.current_player)
             rules_view = RulesView()
             self.window.show_view(rules_view)
-            self.music.stop(self.current_player)
         elif _key == arcade.key.KEY_3 or _key == arcade.key.NUM_3:
+            self.music.stop(self.current_player)
             author_view = AuthorView()
             self.window.show_view(author_view)
-            self.music.stop(self.current_player)
         elif _key == arcade.key.ESCAPE:
             self.window.close()
 
 class RulesView(arcade.View):
     """Rules view"""
+
+    def __init__(self):
+        super(RulesView, self).__init__()
+        self.music = None
+        self.current_player = None
+
+    def play_song(self):
+        """Play the song. """
+        self.music = arcade.Sound("sounds/menu music2.wav", streaming=True)
+        self.current_player = self.music.play(MUSIC_VOLUME)
+
     def on_show(self):
         """ This is run once when we switch to this view """
         # Reset the viewport, necessary if we have a scrolling game and we need
         # to reset the viewport back to the start so we can see what we draw.
         arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+        self.play_song()
+
     def on_draw(self):
         """ Draw this view """
         background = arcade.load_texture(":resources:images/backgrounds/abstract_1.jpg")
@@ -76,24 +89,40 @@ class RulesView(arcade.View):
                          arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
         f = open("record.txt", "r")
         record = f.read()
-        arcade.draw_text(f"RECORD IS {record} s", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4,
-                         arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
+        if float(record) == 999999:
+            arcade.draw_text(f"THERE IS NO RECORD", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4,
+                             arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
+        else:
+            arcade.draw_text(f"RECORD IS {record} s", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4,
+                             arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
         arcade.draw_text("BACK [ESC]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 20,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
 
 
     def on_key_press(self, _key, _modifiers):
         if _key == arcade.key.BACKSPACE or _key == arcade.key.ESCAPE:
+            self.music.stop(self.current_player)
             start_view = MenuView()
             self.window.show_view(start_view)
 
 class AuthorView(arcade.View):
     """View for about author. """
+
+    def __init__(self):
+        super(AuthorView, self).__init__()
+        self.music = None
+        self.current_player = None
+
+    def play_song(self):
+        """Play the song. """
+        self.music = arcade.Sound("sounds/menu music2.wav", streaming=True)
+        self.current_player = self.music.play(MUSIC_VOLUME)
     def on_show(self):
         """ This is run once when we switch to this view """
         # Reset the viewport, necessary if we have a scrolling game and we need
         # to reset the viewport back to the start so we can see what we draw.
         arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+        self.play_song()
 
     def on_draw(self):
         """ Draw this view """
@@ -108,16 +137,29 @@ class AuthorView(arcade.View):
 
     def on_key_press(self, _key, _modifiers):
         if _key == arcade.key.BACKSPACE or _key == arcade.key.ESCAPE:
+            self.music.stop(self.current_player)
             start_view = MenuView()
             self.window.show_view(start_view)
 
 class GamemodeView(arcade.View):
     """View for choosing a map. """
+
+    def __init__(self):
+        super(GamemodeView, self).__init__()
+        self.music = None
+        self.current_player = None
+
+    def play_song(self):
+        """Play the song. """
+        self.music = arcade.Sound("sounds/menu music2.wav", streaming=True)
+        self.current_player = self.music.play(MUSIC_VOLUME)
+
     def on_show(self):
         """ This is run once when we switch to this view """
         # Reset the viewport, necessary if we have a scrolling game and we need
         # to reset the viewport back to the start so we can see what we draw.
         arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+        self.play_song()
 
     def on_draw(self):
         """ Draw this view """
@@ -134,25 +176,40 @@ class GamemodeView(arcade.View):
 
     def on_key_press(self, _key, _modifiers):
         if _key == arcade.key.BACKSPACE or _key == arcade.key.ESCAPE:
+            self.music.stop(self.current_player)
             start_view = MenuView()
             self.window.show_view(start_view)
         elif _key == arcade.key.KEY_2 or _key == arcade.key.NUM_2:
+            self.music.stop(self.current_player)
             game_view = GameView()
             game_view.setup()
             self.window.show_view(game_view)
             start_sound = arcade.load_sound("sounds/start game sound.wav")
             arcade.play_sound(start_sound, volume=0.5)
         elif _key == arcade.key.KEY_1 or _key == arcade.key.NUM_1:
+            self.music.stop(self.current_player)
             game_view = GameView()
             game_view.setup_tutorial()
             self.window.show_view(game_view)
 class WinView(arcade.View):
     """View for win. """
+
+    def play_song(self):
+        """Play the song. """
+        self.music = arcade.Sound("sounds/win music.wav", streaming=True)
+        self.current_player = self.music.play(MUSIC_VOLUME)
+
+    def __init__(self):
+        super(WinView, self).__init__()
+        self.music = None
+        self.current_player = None
+
     def on_show(self):
         """ This is run once when we switch to this view """
         # Reset the viewport, necessary if we have a scrolling game and we need
         # to reset the viewport back to the start so we can see what we draw.
         arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+        self.play_song()
 
     def on_draw(self):
         """ Draw this view """
@@ -163,12 +220,13 @@ class WinView(arcade.View):
         f = open("record.txt", "r")
         record = f.read()
         arcade.draw_text(f"RECORD IS {record} s", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4,
-                         arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
+                             arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
         arcade.draw_text("ADVANCE [ENTER]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 20,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
 
     def on_key_press(self, _key, _modifiers):
         if _key == arcade.key.ENTER:
+            self.music.stop(self.current_player)
             start_view = MenuView()
             self.window.show_view(start_view)
 
@@ -243,8 +301,8 @@ class GameView(arcade.View):
 
         # Set up the player, specifically placing it at these coordinates.
         self.player_sprite = PlayerSprite()
-        self.player_sprite.center_x = 100
-        self.player_sprite.center_y = 100
+        self.player_sprite.center_x = 70
+        self.player_sprite.center_y = 2500
         self.player_list.append(self.player_sprite)
 
         self.score = 0
@@ -320,8 +378,8 @@ class GameView(arcade.View):
 
         # Set up the player, specifically placing it at these coordinates.
         self.player_sprite = PlayerSprite()
-        self.player_sprite.center_x = 200
-        self.player_sprite.center_y = 1700
+        self.player_sprite.center_x = 100
+        self.player_sprite.center_y = 100
         self.player_list.append(self.player_sprite)
 
         self.score = 0
@@ -417,7 +475,6 @@ class GameView(arcade.View):
         elif key == arcade.key.ESCAPE:
             start_view = MenuView()
             self.window.show_view(start_view)
-            start_view.play_song()
 
     def on_key_release(self, key: int, modifiers: int):
         """Called when the user releases a key."""
