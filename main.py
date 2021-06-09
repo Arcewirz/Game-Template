@@ -169,7 +169,7 @@ class WinView(arcade.View):
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, background)
         arcade.draw_text("CONGRATULATIONS! YOU WON!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.5,
                          arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
-        arcade.draw_text("ADVANCE [ESC]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 20,
+        arcade.draw_text("ADVANCE [ENTER]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 20,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
 
     def on_key_press(self, _key, _modifiers):
@@ -325,8 +325,8 @@ class GameView(arcade.View):
 
         # Set up the player, specifically placing it at these coordinates.
         self.player_sprite = PlayerSprite()
-        self.player_sprite.center_x = 40
-        self.player_sprite.center_y = 9472/4
+        self.player_sprite.center_x = 50
+        self.player_sprite.center_y = 50
         self.player_list.append(self.player_sprite)
 
         self.score = 0
