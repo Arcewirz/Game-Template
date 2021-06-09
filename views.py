@@ -35,7 +35,7 @@ class MenuView(arcade.View):
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
         arcade.draw_text("EXIT [ESC]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 20,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
-        arcade.draw_text("To choose, press the key in square brackets.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.35,
+        arcade.draw_text("To choose, press the key given in square brackets.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.35,
                          arcade.color.WHITE, font_size=20, anchor_x="center", font_name='GARA')
 
 
@@ -43,12 +43,9 @@ class MenuView(arcade.View):
     def on_key_press(self, _key, _modifiers):
         """ If the user presses key, a given action will happen. """
         if _key == arcade.key.KEY_1 or _key == arcade.key.NUM_1:
-            game_view = GameView()
-            game_view.setup()
-            self.window.show_view(game_view)
+            choose_view = GamemodeView()
+            self.window.show_view(choose_view)
             self.music.stop(self.current_player)
-            start_sound = arcade.load_sound("sounds/start game sound.wav")
-            arcade.play_sound(start_sound, volume=0.5)
         elif _key == arcade.key.KEY_2 or _key == arcade.key.NUM_2:
             rules_view = RulesView()
             self.window.show_view(rules_view)
@@ -107,6 +104,40 @@ class AuthorView(arcade.View):
             start_view = MenuView()
             self.window.show_view(start_view)
 
+class GamemodeView(arcade.View):
+    def on_show(self):
+        """ This is run once when we switch to this view """
+        # Reset the viewport, necessary if we have a scrolling game and we need
+        # to reset the viewport back to the start so we can see what we draw.
+        arcade.set_viewport(0, SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT - 1)
+
+    def on_draw(self):
+        """ Draw this view """
+        background = arcade.load_texture(":resources:images/backgrounds/abstract_1.jpg")
+        arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, background)
+        arcade.draw_text("CHOOSE A LEVEL", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.3,
+                         arcade.color.WHITE, font_size=50, anchor_x="center", font_name='GARA')
+        arcade.draw_text("TUTORIAL [1]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.6,
+                         arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
+        arcade.draw_text("JUMPING ROAD [2]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2.2,
+                         arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
+        arcade.draw_text("BACK [ESC]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 20,
+                         arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
+
+    def on_key_press(self, _key, _modifiers):
+        if _key == arcade.key.BACKSPACE or _key == arcade.key.ESCAPE:
+            start_view = MenuView()
+            self.window.show_view(start_view)
+        elif _key == arcade.key.KEY_2 or _key == arcade.key.NUM_2:
+            game_view = GameView()
+            game_view.setup()
+            self.window.show_view(game_view)
+            start_sound = arcade.load_sound("sounds/start game sound.wav")
+            arcade.play_sound(start_sound, volume=0.5)
+        elif _key == arcade.key.KEY_1 or _key == arcade.key.NUM_1:
+            game_view = GameView()
+            game_view.setup_tutorial()
+            self.window.show_view(game_view)
 class WinView(arcade.View):
     def on_show(self):
         """ This is run once when we switch to this view """
@@ -138,6 +169,8 @@ class GameView(arcade.View):
         # Call the parent class and set up the window
         super().__init__()
 
+        self.is_tutorial = False
+
         self.window.set_mouse_visible(False)
 
         self.time_elapsed = None
@@ -148,6 +181,7 @@ class GameView(arcade.View):
         self.wall_list = None
         self.player_list = None
         self.princess_list = None
+        self.door_list = None
 
         # Separate variable that holds the player sprite
         self.player_list = None
@@ -192,6 +226,7 @@ class GameView(arcade.View):
         self.wall_list = arcade.SpriteList(use_spatial_hash=True)
         self.coin_list = arcade.SpriteList(use_spatial_hash=True)
         self.princess_list = arcade.SpriteList(use_spatial_hash=True)
+        self.door_list = arcade.SpriteList(use_spatial_hash=True)
 
         # Set up the player, specifically placing it at these coordinates.
         self.player_sprite = PlayerSprite()
@@ -254,6 +289,74 @@ class GameView(arcade.View):
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
 
+    def setup_tutorial(self):
+        """ Set up the game here. Call this function to restart the game. """
+        self.is_tutorial = True
+
+        # Used to keep track of our scrolling
+        self.view_bottom = 0
+        self.view_left = 0
+        self.time_elapsed = 0
+
+        # Create the Sprite lists
+        self.player_list = arcade.SpriteList()
+        self.wall_list = arcade.SpriteList(use_spatial_hash=True)
+        self.coin_list = arcade.SpriteList(use_spatial_hash=True)
+        self.princess_list = arcade.SpriteList(use_spatial_hash=True)
+        self.door_list = arcade.SpriteList(use_spatial_hash=True)
+
+        # Set up the player, specifically placing it at these coordinates.
+        self.player_sprite = PlayerSprite()
+        self.player_sprite.center_x = 200
+        self.player_sprite.center_y = 1700
+        self.player_list.append(self.player_sprite)
+
+        self.score = 0
+
+        self.view_bottom = 0
+        self.view_left = 0
+
+        # --- Load in a map from the tiled editor ---
+
+        # Name of file to load
+        map_name = "tutorial_road.tmx"
+        # Name of the layer in the file that has our platforms/walls
+        platforms_layer_name = 'Platforms'
+        # Name of the layer that has items for pick-up
+        doors_layer_name = 'Doors'
+
+        # Read in the tiled map
+        my_map = arcade.tilemap.read_tmx(map_name)
+
+        # -- Platforms
+        self.wall_list = arcade.tilemap.process_layer(map_object=my_map,
+                                                      layer_name=platforms_layer_name,
+                                                      scaling=TILE_SCALING,
+                                                      use_spatial_hash=True)
+        # -- Doors
+        self.door_list = arcade.tilemap.process_layer(map_object=my_map,
+                                                      layer_name=doors_layer_name,
+                                                      scaling=TILE_SCALING,
+                                                      use_spatial_hash=True)
+
+
+        # Create the 'physics engine'
+        damping = DEFAULT_DAMPING
+        gravity = (0, -GRAVITY)
+        self.physics_engine = arcade.PymunkPhysicsEngine(damping=damping,
+                                                         gravity=gravity)
+        self.physics_engine.add_sprite(self.player_sprite,
+                                       friction=PLAYER_FRICTION,
+                                       mass=PLAYER_MASS,
+                                       moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
+                                       collision_type="player",
+                                       max_horizontal_velocity=PLAYER_MAX_HORIZONTAL_SPEED,
+                                       max_vertical_velocity=PLAYER_MAX_VERTICAL_SPEED)
+        self.physics_engine.add_sprite_list(self.wall_list,
+                                            friction=WALL_FRICTION,
+                                            collision_type="wall",
+                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
+
     def on_draw(self):
         """ Render the screen. """
 
@@ -263,11 +366,18 @@ class GameView(arcade.View):
         background_texture = arcade.load_texture("images/BACKGROUND.png")
         arcade.draw_texture_rectangle((4480 / 2) / 4, (10240 / 2) / 4, 4480 / 4, 10240 / 4, background_texture)
 
+        # Tutorial hints
+        if self.is_tutorial:
+            tutorial_text = "USE ARROWS TO MOVE. USE SPACE TO JUMP. \n THE LONGER YOU HOLD THE BIGGER THE JUMP."
+            arcade.draw_text(tutorial_text, 50, 1700,
+                             arcade.csscolor.WHITE, 40)
+
         # Draw our sprites
         self.coin_list.draw()
         self.player_list.draw()
         self.wall_list.draw()
         self.princess_list.draw()
+        self.door_list.draw()
 
         # Draw our score on the screen, scrolling it with the viewport
         texture = arcade.load_texture("images/dragon coin.png")
@@ -353,12 +463,14 @@ class GameView(arcade.View):
         # Move the player with the physics engine
         self.physics_engine.step()
 
-        # See if we hit any coins
+        # See if we hit any coins, doors or princesses
         coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite,
                                                              self.coin_list)
         princess_hit = arcade.check_for_collision_with_list(self.player_sprite,
                                                             self.princess_list)
-        if princess_hit:
+        doors_hit = arcade.check_for_collision_with_list(self.player_sprite,
+                                                         self.door_list)
+        if princess_hit or doors_hit:
             win_view = WinView()
             self.window.show_view(win_view)
 
