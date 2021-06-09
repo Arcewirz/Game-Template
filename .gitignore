@@ -7,3 +7,7 @@ text test.py
 text test.py
 images/princess.png-autosave.kra
 text test.py
+__pycache__/playerSprite.cpython-39.pyc
+__pycache__/constants.cpython-39.pyc
+__pycache__/gameView.cpython-39.pyc
+__pycache__/views.cpython-39.pyc
