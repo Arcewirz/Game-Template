@@ -3,6 +3,7 @@ from playerSprite import PlayerSprite
 import arcade
 
 class MenuView(arcade.View):
+    """Main menu view"""
 
     def __init__(self):
         super(MenuView, self).__init__()
@@ -29,7 +30,7 @@ class MenuView(arcade.View):
                          arcade.color.WHITE, font_size=70, anchor_x="center", font_name='GARA')
         arcade.draw_text("PLAY [1]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.6,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
-        arcade.draw_text("RULES [2]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2.2,
+        arcade.draw_text("RULES & RECORD [2]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2.2,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
         arcade.draw_text("ABOUT AUTHOR [3]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
@@ -58,6 +59,7 @@ class MenuView(arcade.View):
             self.window.close()
 
 class RulesView(arcade.View):
+    """Rules view"""
     def on_show(self):
         """ This is run once when we switch to this view """
         # Reset the viewport, necessary if we have a scrolling game and we need
@@ -72,6 +74,10 @@ class RulesView(arcade.View):
                          "To jump just press SPACE. The longer you hold the bigger the jump! \n"
                          "For walking and jump direction use arrows.", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.5,
                          arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
+        f = open("record.txt", "r")
+        record = f.read()
+        arcade.draw_text(f"RECORD IS {record} s", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4,
+                         arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
         arcade.draw_text("BACK [ESC]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 20,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
 
@@ -82,6 +88,7 @@ class RulesView(arcade.View):
             self.window.show_view(start_view)
 
 class AuthorView(arcade.View):
+    """View for about author. """
     def on_show(self):
         """ This is run once when we switch to this view """
         # Reset the viewport, necessary if we have a scrolling game and we need
@@ -105,6 +112,7 @@ class AuthorView(arcade.View):
             self.window.show_view(start_view)
 
 class GamemodeView(arcade.View):
+    """View for choosing a map. """
     def on_show(self):
         """ This is run once when we switch to this view """
         # Reset the viewport, necessary if we have a scrolling game and we need
@@ -139,6 +147,7 @@ class GamemodeView(arcade.View):
             game_view.setup_tutorial()
             self.window.show_view(game_view)
 class WinView(arcade.View):
+    """View for win. """
     def on_show(self):
         """ This is run once when we switch to this view """
         # Reset the viewport, necessary if we have a scrolling game and we need
@@ -151,6 +160,10 @@ class WinView(arcade.View):
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, background)
         arcade.draw_text("CONGRATULATIONS! YOU WON!", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 1.5,
                          arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
+        f = open("record.txt", "r")
+        record = f.read()
+        arcade.draw_text(f"RECORD IS {record} s", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4,
+                         arcade.color.WHITE, font_size=30, anchor_x="center", font_name='GARA')
         arcade.draw_text("ADVANCE [ENTER]", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 20,
                          arcade.color.WHITE, font_size=40, anchor_x="center", font_name='GARA')
 
@@ -161,7 +174,7 @@ class WinView(arcade.View):
 
 class GameView(arcade.View):
     """
-    Main application class.
+    View used for the gameplay.
     """
 
     def __init__(self):
@@ -215,7 +228,7 @@ class GameView(arcade.View):
         arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
 
     def setup(self):
-        """ Set up the game here. Call this function to restart the game. """
+        """ Set up the jumping road map here. """
         # Used to keep track of our scrolling
         self.view_bottom = 0
         self.view_left = 0
@@ -290,7 +303,7 @@ class GameView(arcade.View):
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
 
     def setup_tutorial(self):
-        """ Set up the game here. Call this function to restart the game. """
+        """ Set up the tutorial map here. """
         self.is_tutorial = True
 
         # Used to keep track of our scrolling
@@ -471,6 +484,13 @@ class GameView(arcade.View):
         doors_hit = arcade.check_for_collision_with_list(self.player_sprite,
                                                          self.door_list)
         if princess_hit or doors_hit:
+            if not self.is_tutorial:
+                f = open("record.txt", "r")
+                new_time = float(f"{self.time_elapsed:7.1f}")
+                old_record = float(f.read())
+                if new_time < old_record:
+                    f = open("record.txt", "w")
+                    f.write(str(new_time))
             win_view = WinView()
             self.window.show_view(win_view)
 
