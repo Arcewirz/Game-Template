@@ -20,4 +20,5 @@ Jump Knght is a game inspired on Jump King. My version features similar mechanic
 ### Screenshots
 ![Knight jumping in tutorial](screenshots/scr1.png)
 ![Knight standing on the beggining of jumping road](screenshots/scr2.png)
-![Knight near the princess!](screenshots/scr3.png)
+![In the middle of the jumping road](screenshots/scr3.png)
+![Knight near the princess!](screenshots/scr4.png)
