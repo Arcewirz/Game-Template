@@ -15,7 +15,7 @@ Jump Knght is a game inspired on Jump King. My version features similar mechanic
 `cd Jump-Knight `
 2. Install the project's development and runtime requirements:
 `pip install -r requirements.txt`
-3. Run the game by typing `python main.py`
+3. Run the game by typing: `python main.py`
 
 ### Screenshots
 ![Knight jumping in tutorial](screenshots/scr1.png)

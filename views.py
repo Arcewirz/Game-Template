@@ -410,7 +410,6 @@ class GameView(arcade.View):
                                                       scaling=TILE_SCALING,
                                                       use_spatial_hash=True)
 
-
         # Create the 'physics engine'
         damping = DEFAULT_DAMPING
         gravity = (0, -GRAVITY)
