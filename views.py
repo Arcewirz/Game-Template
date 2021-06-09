@@ -301,8 +301,8 @@ class GameView(arcade.View):
 
         # Set up the player, specifically placing it at these coordinates.
         self.player_sprite = PlayerSprite()
-        self.player_sprite.center_x = 70
-        self.player_sprite.center_y = 2500
+        self.player_sprite.center_x = 100
+        self.player_sprite.center_y = 100
         self.player_list.append(self.player_sprite)
 
         self.score = 0
@@ -378,8 +378,8 @@ class GameView(arcade.View):
 
         # Set up the player, specifically placing it at these coordinates.
         self.player_sprite = PlayerSprite()
-        self.player_sprite.center_x = 100
-        self.player_sprite.center_y = 100
+        self.player_sprite.center_x = 300
+        self.player_sprite.center_y = 1700
         self.player_list.append(self.player_sprite)
 
         self.score = 0
