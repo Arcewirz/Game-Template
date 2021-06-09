@@ -11,7 +11,7 @@ class PlayerSprite(arcade.Sprite):
         # Set our scale
         self.scale = CHARACTER_SCALING
 
-        # Images from Kenney.nl's Character pack
+        # Knights image
         main_path = "images/Knight"
 
         # Load textures for idle standing
