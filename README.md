@@ -7,9 +7,9 @@ Jump Knght is a game inspired on Jump King. My version features similar mechanic
 
 ### Technologies
 **Python 3.9.5** - programming language used<br/>
-**Audacity** - recording of original soundtrack<br/>
-**Krita** - making original graphics<br/>
-**Python arcade 2.5.7** - game developing library
+**Python arcade 2.5.7** - game developing library<br>
+**Krita** - recording of original soundtrack<br/>
+**Audacity** - making original graphics<br/>
 
 ### How to run this app?
 1. Clone the game: 
